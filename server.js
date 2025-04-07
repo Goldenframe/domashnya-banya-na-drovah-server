@@ -1,3 +1,4 @@
+require('dotenv').config(); 
 const express = require('express');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs'); 
@@ -5,7 +6,6 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config(); 
 const app = express();
 const pool = new Pool({
     user: process.env.DB_USER,
