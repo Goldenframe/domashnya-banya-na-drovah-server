@@ -19,6 +19,7 @@
     "express": "^4.21.1",
     "express-rate-limit": "^7.5.0",
     "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.13.1"
