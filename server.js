@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config(); // Подключаем dotenv в самом начале
+require('dotenv').config(); 
 const app = express();
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -15,10 +15,12 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-const allowedOrigins = process.env.CLIENT_ORIGIN.split(','); // Разбиваем строку на массив
-app.use(cors({
+const allowedOrigins = process.env.CLIENT_ORIGIN 
+  ? process.env.CLIENT_ORIGIN.split(',') 
+  : ['http://localhost:5173'];
+  app.use(cors({
     origin: allowedOrigins,
-    credentials: true // Если используете куки/авторизацию
+    credentials: true 
 }));
 
 app.use(bodyParser.json());
