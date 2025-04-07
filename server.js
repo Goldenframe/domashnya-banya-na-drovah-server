@@ -5,12 +5,8 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config();
+require('dotenv').config(); // Подключаем dotenv в самом начале
 const app = express();
-
-const tokenTel = process.env.TELEGRAM_BOT_TOKEN;
-const bot = new TelegramBot(tokenTel, { polling: true });
-
 const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -19,24 +15,27 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
+const allowedOrigins = process.env.CLIENT_ORIGIN.split(','); // Разбиваем строку на массив
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN
+    origin: allowedOrigins,
+    credentials: true // Если используете куки/авторизацию
 }));
 
 app.use(bodyParser.json());
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
 app.get('/api/validate-token', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
-
+    
     if (!token) return res.status(401).send();
-
+  
     try {
-        jwt.verify(token, 'your_secret_key');
-        res.status(200).send();
+      jwt.verify(token, 'your_secret_key');
+      res.status(200).send();
     } catch {
-        res.status(401).send();
+      res.status(401).send();
     }
-});
+  });
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const options = {
@@ -257,12 +256,12 @@ function authenticateToken(req, res, next) {
     ];
 
     if (openPaths.includes(req.path)) {
-        return next();
+        return next(); // не проверяем токен для этих маршрутов
     }
 
     const token = req.headers.authorization?.split(' ')[1];
     if (token) {
-        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
+        jwt.verify(token, 'secret_key', (err, user) => {
             if (err) {
                 return res.sendStatus(403);
             }
@@ -432,7 +431,7 @@ app.get('/userAccount/:userId/availableIntervals/:booking_date_start', async (re
             if (intervalStart <= now) {
                 const adjustedStartTime = new Date(now.getTime() + minPreparationTime);
                 adjustedStartTime.setMinutes(0, 0, 0); // Round to full hour
-
+                
                 if (adjustedStartTime >= intervalEnd) {
                     return; // Skip this interval if adjusted start is after end
                 }
@@ -451,18 +450,18 @@ app.get('/userAccount/:userId/availableIntervals/:booking_date_start', async (re
 
                 // Check against existing bookings
                 let isAvailable = true;
-
+                
                 for (const booking of bookings) {
                     // Parse booking times (format: "2025-03-30T17:00:00.000Z")
                     const bookingStart = new Date(booking.start_time);
                     const bookingEnd = new Date(booking.end_time);
-
+                    
                     // Check for direct overlap
                     if (potentialStart < bookingEnd && potentialEnd > bookingStart) {
                         isAvailable = false;
                         break;
                     }
-
+                    
                     // Check 1-hour gap before potential booking
                     const oneHourBeforePotential = new Date(potentialStart);
                     oneHourBeforePotential.setHours(oneHourBeforePotential.getHours() - 1);
@@ -470,7 +469,7 @@ app.get('/userAccount/:userId/availableIntervals/:booking_date_start', async (re
                         isAvailable = false;
                         break;
                     }
-
+                    
                     // Check 1-hour gap after potential booking
                     const oneHourAfterPotential = new Date(potentialEnd);
                     oneHourAfterPotential.setHours(oneHourAfterPotential.getHours() + 1);
@@ -523,13 +522,13 @@ app.get('/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:inter
 
         // Обработка времени окончания интервала (24:00 -> 23:59:59)
         const intervalEndTime = interval.end_time === '24:00' ? '23:59:59' : interval.end_time;
-
+        
         const intervalStart = new Date(`${booking_date}T${interval.start_time}`);
         const intervalEnd = new Date(`${booking_date}T${intervalEndTime}`);
         const selectedStartTime = new Date(`${booking_date}T${start_time}`);
 
         let availableEndTimes = [];
-
+        
         if (selectedStartTime >= intervalStart && selectedStartTime < intervalEnd) {
             // Минимальное время окончания (ровно 2 часа от начала)
             const minEndTime = new Date(selectedStartTime);
@@ -566,9 +565,9 @@ app.get('/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:inter
 
                 if (isAvailable) {
                     // Форматируем 23:59:59 как 24:00 для отображения
-                    const displayTime = endTime.getHours() === 23 && endTime.getMinutes() === 59 ? '24:00' :
-                        endTime.toTimeString().slice(0, 5);
-
+                    const displayTime = endTime.getHours() === 23 && endTime.getMinutes() === 59 ? '24:00' : 
+                                       endTime.toTimeString().slice(0, 5);
+                    
                     availableEndTimes.push({
                         endTime: displayTime
                     });
@@ -1374,7 +1373,7 @@ app.delete('/adminAccount/:userId/discounts/:discountId', async (req, res) => {
     const { discountId } = req.params;
     const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        await client.query('BEGIN'); 
 
         await client.query(
             'UPDATE bookings SET discount_id = NULL WHERE discount_id = $1',
@@ -1390,17 +1389,19 @@ app.delete('/adminAccount/:userId/discounts/:discountId', async (req, res) => {
             return res.status(404).json({ error: 'Скидка не найдена' });
         }
 
-        await client.query('COMMIT');
+        await client.query('COMMIT'); 
 
         res.status(200).json({ message: 'Скидка успешно удалена' });
     } catch (error) {
-        await client.query('ROLLBACK');
+        await client.query('ROLLBACK'); 
         console.error('Ошибка при удалении скидки:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     } finally {
-        client.release();
+        client.release(); 
     }
 });
-app.listen(5000, () => {
-    console.log('Server is running on port 5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Сервер запущен на порту ${PORT}`);
+    console.log(`Разрешённые домены: ${allowedOrigins.join(', ')}`);
 });
