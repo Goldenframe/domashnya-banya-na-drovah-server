@@ -19,10 +19,10 @@ const allowedOrigins = process.env.CLIENT_ORIGIN
     ? process.env.CLIENT_ORIGIN.split(',')
     : ['http://localhost:5173'];
 app.use(cors({
-    origin: allowedOrigins,
+    origin: process.env.CLIENT_ORIGIN,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
 }));
-
 app.use(bodyParser.json());
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
@@ -1403,7 +1403,7 @@ app.delete('/api/adminAccount/:userId/discounts/:discountId', async (req, res) =
     }
 });
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {
     console.log(`Сервер запущен на порту ${PORT}`);
     console.log(`Разрешённые домены: ${allowedOrigins.join(', ')}`);
 });
