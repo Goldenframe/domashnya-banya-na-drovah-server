@@ -60,7 +60,7 @@ async function sendVerificationCall(phone_number) {
     return await response.json();
 }
 
-app.post('/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { phone_number } = req.body;
 
     const existingUser = await pool.query('SELECT * FROM users WHERE phone_number = $1', [phone_number]);
@@ -85,7 +85,7 @@ app.post('/register', async (req, res) => {
     res.status(200).json({ message: 'Код верификации отправлен на Ваш номер телефона.' });
 });
 
-app.post('/verify-registration', async (req, res) => {
+app.post('/api/verify-registration', async (req, res) => {
     const { first_name, last_name, password, phone_number, verification_code } = req.body;
 
     const result = await pool.query(
@@ -135,7 +135,7 @@ app.post('/verify-registration', async (req, res) => {
 });
 
 
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { phone_number, password } = req.body;
 
     if (!phone_number || !password) {
@@ -172,7 +172,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post("/forgot-password", async (req, res) => {
+app.post("/api/forgot-password", async (req, res) => {
     const { phone_number } = req.body;
 
     try {
@@ -195,7 +195,7 @@ app.post("/forgot-password", async (req, res) => {
         res.status(500).json({ error: "Ошибка сервера" });
     }
 });
-app.post("/verify-code", async (req, res) => {
+app.post("/api/verify-code", async (req, res) => {
     const { phone_number, verification_code } = req.body;
 
     try {
@@ -228,7 +228,7 @@ app.post("/verify-code", async (req, res) => {
         res.status(500).json({ error: "Ошибка сервера при верификации кода." });
     }
 });
-app.post("/reset-password", async (req, res) => {
+app.post("/api/reset-password", async (req, res) => {
     const { phone_number, verification_code, new_password } = req.body;
 
     try {
@@ -277,7 +277,7 @@ function authenticateToken(req, res, next) {
 
 app.use(authenticateToken);
 
-app.get('/userAccount/:userId/profileData', async (req, res) => {
+app.get('/api/userAccount/:userId/profileData', async (req, res) => {
     const { userId } = req.params;
     try {
         const result = await pool.query('SELECT first_name, last_name, phone_number FROM users WHERE id = $1', [userId]);
@@ -293,7 +293,7 @@ app.get('/userAccount/:userId/profileData', async (req, res) => {
         res.status(500).json({ error: 'Ошибки сервера' });
     }
 });
-app.post('/request-phone-change', async (req, res) => {
+app.post('/api/request-phone-change', async (req, res) => {
     const { userId, new_phone_number } = req.body;
 
     const existingUser = await pool.query('SELECT * FROM users WHERE phone_number = $1', [new_phone_number]);
@@ -316,7 +316,7 @@ app.post('/request-phone-change', async (req, res) => {
 
     res.status(200).json({ message: 'Код отправлен' });
 });
-app.post('/verify-phone-change', async (req, res) => {
+app.post('/api/verify-phone-change', async (req, res) => {
     const { userId, new_phone_number, verification_code } = req.body;
 
     const result = await pool.query(
@@ -333,7 +333,7 @@ app.post('/verify-phone-change', async (req, res) => {
 
     res.status(200).json({ message: 'Номер успешно обновлён' });
 });
-app.post('/userAccount/:userId/editProfile', async (req, res) => {
+app.post('/api/userAccount/:userId/editProfile', async (req, res) => {
     const { userId, first_name, last_name, phone_number, current_password, new_password } = req.body;
 
     try {
@@ -403,7 +403,7 @@ app.post('/userAccount/:userId/editProfile', async (req, res) => {
     }
 });
 
-app.get('/userAccount/:userId/availableIntervals/:booking_date_start', async (req, res) => {
+app.get('/api/userAccount/:userId/availableIntervals/:booking_date_start', async (req, res) => {
     const { booking_date_start } = req.params;
 
     try {
@@ -501,7 +501,7 @@ app.get('/userAccount/:userId/availableIntervals/:booking_date_start', async (re
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.get('/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:intervalId', async (req, res) => {
+app.get('/api/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:intervalId', async (req, res) => {
     const { booking_date, start_time, intervalId } = req.params;
 
     try {
@@ -583,7 +583,7 @@ app.get('/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:inter
         res.status(500).json({ error: 'Произошла ошибка при получении доступных конечных времен.' });
     }
 });
-app.get('/userAccount/:userId/bookings', async (req, res) => {
+app.get('/api/userAccount/:userId/bookings', async (req, res) => {
     console.log('Запрос получен!');
     try {
         const { userId } = req.params;
@@ -621,7 +621,7 @@ app.get('/userAccount/:userId/bookings', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении бронирований' });
     }
 });
-app.post('/userAccount/:userId/book', async (req, res) => {
+app.post('/api/userAccount/:userId/book', async (req, res) => {
     try {
         const { userId } = req.params;
         const { booking_date, start_time, end_time, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity, discount_id } = req.body;
@@ -684,7 +684,7 @@ app.post('/userAccount/:userId/book', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при бронировании' });
     }
 });
-app.delete('/userAccount/:userId', async (req, res) => {
+app.delete('/api/userAccount/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
@@ -1011,7 +1011,7 @@ const calculatePrice = (start, end, isWeekend, broom_quantity, towel_quantity, h
     cost += (broom_quantity * 500) + (towel_quantity * 200) + (hat_quantity * 300) + (sheets_quantity * 400);
     return cost;
 };
-app.get('/userAccount/:userId/discounts', async (req, res) => {
+app.get('/api/userAccount/:userId/discounts', async (req, res) => {
     const { userId } = req.params;
 
     try {
@@ -1023,7 +1023,7 @@ app.get('/userAccount/:userId/discounts', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
-app.delete('/userAccount/:userId/bookings/:bookingId', async (req, res) => {
+app.delete('/api/userAccount/:userId/bookings/:bookingId', async (req, res) => {
     const { userId, bookingId } = req.params;
 
     console.log('userId:', userId);
@@ -1066,7 +1066,7 @@ app.delete('/userAccount/:userId/bookings/:bookingId', async (req, res) => {
         res.status(500).json({ message: 'Ошибка сервера.' });
     }
 });
-app.get('/adminAccount/:userId/bookings', async (req, res) => {
+app.get('/api/adminAccount/:userId/bookings', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
@@ -1109,7 +1109,7 @@ app.get('/adminAccount/:userId/bookings', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении бронирований' });
     }
 });
-app.post('/adminAccount/:userId/intervals', async (req, res) => {
+app.post('/api/adminAccount/:userId/intervals', async (req, res) => {
     const { booking_date, start_time, end_time } = req.body;
 
     try {
@@ -1149,7 +1149,7 @@ app.post('/adminAccount/:userId/intervals', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при добавлении интервала' });
     }
 });
-app.get('/adminAccount/:userId/intervals', async (req, res) => {
+app.get('/api/adminAccount/:userId/intervals', async (req, res) => {
     try {
         const intervalsResult = await pool.query('SELECT * FROM booking_intervals');
         const bookingsResult = await pool.query(`
@@ -1175,7 +1175,7 @@ app.get('/adminAccount/:userId/intervals', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении интервалов и бронирований' });
     }
 });
-app.get('/adminAccount/:userId/availableIntervals/:bookingDate', async (req, res) => {
+app.get('/api/adminAccount/:userId/availableIntervals/:bookingDate', async (req, res) => {
     const { bookingDate } = req.params;
 
     try {
@@ -1206,7 +1206,7 @@ app.get('/adminAccount/:userId/availableIntervals/:bookingDate', async (req, res
         res.status(500).json({ error: 'Ошибка при получении доступных интервалов' });
     }
 });
-app.delete('/adminAccount/:userId/intervals/:intervalId', async (req, res) => {
+app.delete('/api/adminAccount/:userId/intervals/:intervalId', async (req, res) => {
     const { intervalId } = req.params;
 
     try {
@@ -1249,7 +1249,7 @@ app.delete('/adminAccount/:userId/intervals/:intervalId', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при удалении интервала' });
     }
 });
-app.get('/adminAccount/:userId/discounts/active', async (req, res) => {
+app.get('/api/adminAccount/:userId/discounts/active', async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT * FROM discounts`
@@ -1260,7 +1260,7 @@ app.get('/adminAccount/:userId/discounts/active', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
-app.post('/adminAccount/:userId/discounts', async (req, res) => {
+app.post('/api/adminAccount/:userId/discounts', async (req, res) => {
     const {
         description,
         discountType,
@@ -1310,7 +1310,7 @@ app.post('/adminAccount/:userId/discounts', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
-app.put('/adminAccount/:userId/discounts/:discountId', async (req, res) => {
+app.put('/api/adminAccount/:userId/discounts/:discountId', async (req, res) => {
     const { discountId } = req.params;
     const {
         description,
@@ -1371,7 +1371,7 @@ app.put('/adminAccount/:userId/discounts/:discountId', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
-app.delete('/adminAccount/:userId/discounts/:discountId', async (req, res) => {
+app.delete('/api/adminAccount/:userId/discounts/:discountId', async (req, res) => {
     const { discountId } = req.params;
     const client = await pool.connect();
     try {
