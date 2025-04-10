@@ -32,7 +32,7 @@ app.get('/api/validate-token', (req, res) => {
     if (!token) return res.status(401).send();
 
     try {
-        jwt.verify(token, 'your_secret_key');
+        jwt.verify(token, process.env.JWT_SECRET_KEY);
         res.status(200).send();
     } catch {
         res.status(401).send();
@@ -116,7 +116,8 @@ app.post('/api/verify-registration', async (req, res) => {
         );
 
         const userId = insertResult.rows[0].id;
-        const token = jwt.sign({ first_name, last_name, phone_number, userId, role }, 'secret_key', { expiresIn: '7d' });
+        const token = jwt.sign(
+            { first_name, last_name, phone_number, userId, role }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
 
         await pool.query(
             'DELETE FROM verification_codes WHERE phone_number = $1',
@@ -158,7 +159,7 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: 'Неверный пароль! Попробуйте снова.' });
         }
 
-        const token = jwt.sign({ userId: user.id, role }, 'secret_key', { expiresIn: '7d' });
+        const token = jwt.sign({ userId: user.id, role }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
 
         return res.json({
             token,
