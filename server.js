@@ -54,11 +54,25 @@ bot.onText(/\/start/, (msg) => {
 });
 
 async function sendVerificationCall(phone_number) {
-    const response = await fetch(`https://sms.ru/code/call?phone=${phone_number}&ip=33.22.11.55&api_id=CC44BACB-0E72-2AE0-02C3-EA2D9679718E`, {
-        method: 'GET',
-    });
-    return await response.json();
-}
+    try {
+      const response = await fetch(`https://sms.ru/code/call?phone=${phone_number}&ip=33.22.11.55&api_id=CC44BACB-0E72-2AE0-02C3-EA2D9679718E`);
+      
+      if (!response.ok) { 
+        throw new Error(`SMS.RU API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.status !== "OK") {
+        throw new Error(`SMS.RU error: ${data.status_text || 'Unknown error'}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('SMS.RU call failed:', error);
+      throw error;
+    }
+  }
 
 app.post('/api/register', async (req, res) => {
     const { phone_number } = req.body;
@@ -260,7 +274,7 @@ function authenticateToken(req, res, next) {
         '/api/verify-registration',
         '/api/forgot-password',
         '/api/verify-code',
-        'api/validate-token',
+        '/api/validate-token',
     ];
 
     if (openPaths.includes(req.path)) {
