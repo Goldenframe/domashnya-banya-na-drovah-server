@@ -254,8 +254,13 @@ function authenticateToken(req, res, next) {
         '/verify-registration',
         '/forgot-password',
         '/verify-code',
+        '/validate-token',
         '/api/login',
         '/api/register',
+        '/api/verify-registration',
+        '/api/forgot-password',
+        '/api/verify-code',
+        'api/validate-token',
     ];
 
     if (openPaths.includes(req.path)) {
