@@ -98,9 +98,12 @@ app.post('/api/register', async (req, res) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await pool.query(
-        'INSERT INTO verification_codes (phone_number, code, expires_at) VALUES ($1, $2, $3)',
+        `INSERT INTO verification_codes (phone_number, code, expires_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (phone_number)
+         DO UPDATE SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at`,
         [phone_number, verificationCode, expiresAt]
-    );
+      );
 
     res.status(200).json({ message: 'Код верификации отправлен на Ваш номер телефона.' });
 });
