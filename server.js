@@ -18,11 +18,17 @@ const pool = new Pool({
 const allowedOrigins = process.env.CLIENT_ORIGIN
     ? process.env.CLIENT_ORIGIN.split(',')
     : ['http://localhost:5173'];
-app.use(cors({
-    origin: process.env.CLIENT_ORIGIN,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true
-}));
+    app.use(cors({
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        credentials: true
+    }));
 app.use(bodyParser.json());
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
