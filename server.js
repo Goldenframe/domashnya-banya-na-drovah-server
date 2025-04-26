@@ -451,49 +451,42 @@ app.get('/api/userAccount/:userId/availableIntervals/:booking_date_start', async
         let availableStartTimes = [];
 
         const now = new Date();
-        const minPreparationTime = 2 * 60 * 60 * 1000; // 2 hours in ms
+        const minPreparationTime = 2 * 60 * 60 * 1000; 
 
         intervals.forEach(interval => {
-            // Parse interval times (format: "08:00")
             const intervalStart = new Date(`${booking_date_start}T${interval.start_time.padStart(5, '0')}:00`);
             const intervalEnd = new Date(`${booking_date_start}T${interval.end_time.padStart(5, '0')}:00`);
 
-            // Adjust interval start if it's in the past
             if (intervalStart <= now) {
                 const adjustedStartTime = new Date(now.getTime() + minPreparationTime);
-                adjustedStartTime.setMinutes(0, 0, 0); // Round to full hour
+                adjustedStartTime.setMinutes(0, 0, 0); 
 
                 if (adjustedStartTime >= intervalEnd) {
-                    return; // Skip this interval if adjusted start is after end
+                    return; 
                 }
                 intervalStart.setTime(adjustedStartTime.getTime());
             }
 
-            // Generate all possible 2-hour slots within the interval
             for (let time = new Date(intervalStart); time < intervalEnd; time.setHours(time.getHours() + 1)) {
                 const potentialStart = new Date(time);
                 const potentialEnd = new Date(potentialStart);
                 potentialEnd.setHours(potentialEnd.getHours() + 2);
 
                 if (potentialEnd > intervalEnd) {
-                    continue; // Skip if the 2-hour slot doesn't fit
+                    continue; 
                 }
 
-                // Check against existing bookings
                 let isAvailable = true;
 
                 for (const booking of bookings) {
-                    // Parse booking times (format: "2025-03-30T17:00:00.000Z")
                     const bookingStart = new Date(booking.start_time);
                     const bookingEnd = new Date(booking.end_time);
 
-                    // Check for direct overlap
                     if (potentialStart < bookingEnd && potentialEnd > bookingStart) {
                         isAvailable = false;
                         break;
                     }
 
-                    // Check 1-hour gap before potential booking
                     const oneHourBeforePotential = new Date(potentialStart);
                     oneHourBeforePotential.setHours(oneHourBeforePotential.getHours() - 1);
                     if (oneHourBeforePotential < bookingEnd && potentialStart > bookingStart) {
@@ -501,7 +494,6 @@ app.get('/api/userAccount/:userId/availableIntervals/:booking_date_start', async
                         break;
                     }
 
-                    // Check 1-hour gap after potential booking
                     const oneHourAfterPotential = new Date(potentialEnd);
                     oneHourAfterPotential.setHours(oneHourAfterPotential.getHours() + 1);
                     if (oneHourAfterPotential > bookingStart && potentialEnd < bookingEnd) {
@@ -519,7 +511,6 @@ app.get('/api/userAccount/:userId/availableIntervals/:booking_date_start', async
             }
         });
 
-        // Remove duplicates and sort
         const distinctStartTimes = [...new Map(availableStartTimes.map(item => [item.startTime, item])).values()]
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -551,7 +542,6 @@ app.get('/api/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:i
             return res.status(404).json({ error: 'Interval not found' });
         }
 
-        // Обработка времени окончания интервала (24:00 -> 23:59:59)
         const intervalEndTime = interval.end_time === '24:00' ? '23:59:59' : interval.end_time;
 
         const intervalStart = new Date(`${booking_date}T${interval.start_time}`);
@@ -561,33 +551,26 @@ app.get('/api/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:i
         let availableEndTimes = [];
 
         if (selectedStartTime >= intervalStart && selectedStartTime < intervalEnd) {
-            // Минимальное время окончания (ровно 2 часа от начала)
             const minEndTime = new Date(selectedStartTime);
             minEndTime.setHours(minEndTime.getHours() + 2);
 
-            // Максимальное время окончания (конец интервала)
             const maxEndTime = new Date(intervalEnd);
 
-            // Если интервал заканчивается в 24:00, добавляем это время как вариант
             if (interval.end_time === '24:00') {
                 maxEndTime.setHours(24, 0, 0, 0);
             }
 
-            // Проверяем все возможные варианты окончания
             for (let endTime = new Date(minEndTime); endTime <= maxEndTime; endTime.setHours(endTime.getHours() + 1)) {
-                // Для случая 24:00
                 if (endTime.getHours() === 24) {
                     endTime.setHours(23, 59, 59);
                 }
 
                 let isAvailable = true;
 
-                // Проверяем каждое существующее бронирование
                 for (const booking of bookings) {
                     const bookingStart = new Date(booking.start_time);
                     const bookingEnd = new Date(booking.end_time);
 
-                    // Проверка пересечения
                     if (selectedStartTime < bookingEnd && endTime > bookingStart) {
                         isAvailable = false;
                         break;
@@ -595,7 +578,6 @@ app.get('/api/userAccount/:userId/availableEndTimes/:booking_date/:start_time/:i
                 }
 
                 if (isAvailable) {
-                    // Форматируем 23:59:59 как 24:00 для отображения
                     const displayTime = endTime.getHours() === 23 && endTime.getMinutes() === 59 ? '24:00' :
                         endTime.toTimeString().slice(0, 5);
 
@@ -684,8 +666,8 @@ app.post('/api/userAccount/:userId/book', async (req, res) => {
         }
 
         const result = await pool.query(
-            'INSERT INTO bookings (user_id, booking_date, start_time, end_time, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity, discount_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-            [userId, booking_date, startTime, endTime, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity, discount_id]
+            'INSERT INTO bookings (user_id, booking_date, start_time, end_time, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity, discount_id, guest_user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *',
+            [userId, booking_date, startTime, endTime, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity, discount_id, null]
         );
 
         const userResult = await pool.query('SELECT first_name, last_name, phone_number FROM users WHERE id = $1', [userId]);
@@ -695,10 +677,6 @@ app.post('/api/userAccount/:userId/book', async (req, res) => {
         const admins = adminsResult.rows;
 
         const message = `Новое бронирование:\nПользователь: ${user.first_name} ${user.last_name}\nТелефон: ${user.phone_number}\nДата: ${new Date(booking_date).toLocaleDateString('ru-RU')}\nВремя: ${start_time} - ${end_time}\nЦена: ${price}\nМетлы: ${broom_quantity}\nПолотенца: ${towel_quantity}\nШапки: ${hat_quantity}\nПростыни: ${sheets_quantity}`;
-        bot.on('message', (msg) => {
-            const chatId = msg.chat.id;
-            console.log(`Chat ID: ${chatId}`);
-        });
         admins.forEach(admin => {
             bot.sendMessage(admin.chat_id, message)
                 .catch(err => {
@@ -729,7 +707,91 @@ app.delete('/api/userAccount/:userId', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+
 let waitingForInput = false;
+
+bot.onText(/\/view_bookings/, async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+        try {
+            const result = await pool.query(`
+                SELECT 
+                    b.id AS booking_id,
+                    COALESCE(u.first_name, gu.first_name) AS first_name,
+                    COALESCE(u.last_name, gu.last_name) AS last_name,
+                    b.booking_date,
+                    TO_CHAR(b.start_time, 'HH24:MI') AS start_time,
+                    TO_CHAR(b.end_time, 'HH24:MI') AS end_time,
+                    b.broom,
+                    b.broom_quantity,
+                    b.towel,
+                    b.towel_quantity,
+                    b.hat,
+                    b.hat_quantity,
+                    b.sheets,
+                    b.sheets_quantity,
+                    b.price,
+                    CASE 
+                        WHEN u.id IS NOT NULL THEN 'С аккаунтом'
+                        WHEN gu.id IS NOT NULL THEN 'Без аккаунта'
+                        ELSE '-'
+                    END AS user_type,
+                    CASE 
+                        WHEN d.id IS NOT NULL THEN 'Действует'
+                        ELSE 'Не действует'
+                    END AS discount_status
+                FROM 
+                    bookings b
+                LEFT JOIN 
+                    users u ON b.user_id = u.id
+                LEFT JOIN 
+                    guest_users gu ON b.guest_user_id = gu.id
+                LEFT JOIN 
+                    discounts d ON b.discount_id = d.id
+                WHERE 
+                    b.booking_date::date >= CURRENT_DATE
+                ORDER BY 
+                    b.booking_date ASC, b.start_time ASC
+            `);
+
+            const bookings = result.rows;
+
+            if (bookings.length === 0) {
+                await bot.sendMessage(chatId, "На данный момент нет активных бронирований.");
+                return;
+            }
+
+            for (const booking of bookings) {
+                const message = `
+Бронь №${booking.booking_id}
+Имя: ${booking.first_name || '-'}
+Фамилия: ${booking.last_name || '-'}
+Дата бронирования: ${formatDate(booking.booking_date)}
+Время: ${booking.start_time.slice(0, 5)} - ${booking.end_time.slice(0, 5)}
+Тип пользователя: ${booking.user_type}
+Статус скидки: ${booking.discount_status}
+Услуги:
+- Веник: ${booking.broom ? 'Да' : 'Нет'} (кол-во: ${booking.broom_quantity || 0})
+- Полотенце: ${booking.towel ? 'Да' : 'Нет'} (кол-во: ${booking.towel_quantity || 0})
+- Шапка: ${booking.hat ? 'Да' : 'Нет'} (кол-во: ${booking.hat_quantity || 0})
+- Простыня: ${booking.sheets ? 'Да' : 'Нет'} (кол-во: ${booking.sheets_quantity || 0})
+Стоимость: ${booking.price} ₽
+                `.trim();
+
+                await bot.sendMessage(chatId, message);
+            }
+        } catch (error) {
+            console.error('Ошибка при получении бронирований:', error);
+            await bot.sendMessage(chatId, "Произошла ошибка при получении бронирований. Попробуйте позже.");
+        }
+    }
+);
+
+function formatDate(date) {
+    const d = new Date(date);
+    return d.toLocaleDateString('ru-RU');
+}
 
 bot.onText(/\/add_booking/, async (msg) => {
     waitingForInput = false;
@@ -813,14 +875,13 @@ async function collectUserData(bookingData) {
         'INSERT INTO guest_users (first_name, last_name, phone_number) VALUES ($1, $2, $3) RETURNING id',
         [first_name, last_name, phone_number]
     );
-
     const guestId = guestResult.rows[0].id;
 
     const bookingResult = await pool.query(
         `INSERT INTO bookings 
-        (user_id, booking_date, start_time, end_time, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
-        [guestId, formattedDate, startTime, endTime, price, broom_quantity > 0, broom_quantity, towel_quantity > 0, towel_quantity, hat_quantity > 0, hat_quantity, sheets_quantity > 0, sheets_quantity]
+        (user_id, guest_user_id, booking_date, start_time, end_time, price, broom, broom_quantity, towel, towel_quantity, hat, hat_quantity, sheets, sheets_quantity) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+        [null, guestId, formattedDate, startTime, endTime, price, broom_quantity > 0, broom_quantity, towel_quantity > 0, towel_quantity, hat_quantity > 0, hat_quantity, sheets_quantity > 0, sheets_quantity]
     );
 
     const bookingId = bookingResult.rows[0].id;
@@ -1117,18 +1178,18 @@ app.get('/api/adminAccount/:userId/bookings', async (req, res) => {
                 CASE 
                     WHEN u.id IS NOT NULL THEN 'С аккаунтом'
                     WHEN gu.id IS NOT NULL THEN 'Без аккаунта'
-                    ELSE 'Неизвестный'
+                    ELSE '-'
                 END AS user_type,
                CASE 
-                    WHEN d.id IS NOT NULL THEN 'Действует акция'
-                    ELSE 'Нет акции'
+                    WHEN d.id IS NOT NULL THEN 'Действует'
+                    ELSE 'Не действует'
                 END AS discount_status
             FROM 
                 bookings b
             LEFT JOIN 
                 users u ON b.user_id = u.id
             LEFT JOIN 
-                guest_users gu ON b.user_id = gu.id
+                guest_users gu ON b.guest_user_id = gu.id
             LEFT JOIN 
                 discounts d ON b.discount_id = d.id
         `);
