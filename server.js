@@ -15,6 +15,15 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
+
+pool.connect()
+  .then((client) => {
+    console.log('База данных подключена!');
+    client.release();
+  })
+  .catch(err => console.error('Не получилось соединиться с базой!', err));
+
+
 const allowedOrigins = process.env.CLIENT_ORIGIN
     ? process.env.CLIENT_ORIGIN.split(',')
     : ['http://localhost:5173'];
