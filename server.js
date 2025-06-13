@@ -40,7 +40,8 @@ const allowedOrigins = process.env.CLIENT_ORIGIN
     }));
 app.use(bodyParser.json());
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-
+const token = process.env.TELEGRAM_BOT_TOKEN;
+console.log('Telegram Token from ENV?', token);
 app.get('/api/validate-token', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
 
